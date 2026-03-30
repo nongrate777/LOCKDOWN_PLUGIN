@@ -1,0 +1,75 @@
+name: Release Plugin
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'site-access-control/site-access-control.php'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Читаем версию прямо из plugin header
+      - name: Get plugin version
+        id: version
+        run: |
+          VERSION=$(grep -m1 "^ \* Version:" site-access-control/site-access-control.php | awk '{print $3}')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+
+      # Проверяем — не существует ли уже такой тег (защита от дублей)
+      - name: Check tag does not exist
+        run: |
+          if git rev-parse "refs/tags/${{ steps.version.outputs.TAG }}" > /dev/null 2>&1; then
+            echo "Tag ${{ steps.version.outputs.TAG }} already exists, skipping."
+            exit 0
+          fi
+
+      # Собираем zip: папка site-access-control/ → site-access-control.zip
+      - name: Build zip
+        run: |
+          cd site-access-control
+          zip -r ../site-access-control.zip . -x "*.git*" -x "__MACOSX*" -x "*.DS_Store"
+          cd ..
+
+      # Обновляем update.json
+      - name: Update update.json
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          TAG=${{ steps.version.outputs.TAG }}
+          cat > update.json <<EOF
+          {
+            "version": "$VERSION",
+            "download_url": "https://github.com/${{ github.repository }}/releases/download/$TAG/site-access-control.zip",
+            "details_url": "https://github.com/${{ github.repository }}",
+            "changelog": "See https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          }
+          EOF
+
+      # Коммитим update.json обратно в master
+      - name: Commit update.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add update.json
+          git diff --cached --quiet || git commit -m "chore: update.json → ${{ steps.version.outputs.VERSION }}"
+          git push
+
+      # Создаём GitHub Release и прикладываем zip
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: "v${{ steps.version.outputs.VERSION }}"
+          files: site-access-control.zip
+          generate_release_notes: true
