@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "download_url": "https://github.com/nongrate777/LOCKDOWN_PLUGIN/releases/download/v1.2.0/site-access-control.zip",
   "details_url": "https://github.com/nongrate777/LOCKDOWN_PLUGIN",
-  "changelog": "<h4>1.2.0</h4><ul><li>Управление ботами через чекбоксы</li><li>Дополнительные боты через textarea</li><li>Обновлён список ботов по Cloudflare Radar</li></ul>"
+  "changelog": "<h4>1.2.1</h4><ul><li>Управление ботами через чекбоксы</li><li>Дополнительные боты через textarea</li><li>Обновлён список ботов по Cloudflare Radar</li></ul>"
 }
