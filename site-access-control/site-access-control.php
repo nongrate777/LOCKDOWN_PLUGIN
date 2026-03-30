@@ -3,7 +3,7 @@
  * Plugin Name: Site Access Control
  * Plugin URI:  https://noname.com
  * Description: Управление доступом к фронтенду: открыт / закрыт для людей / закрыт для всех. Администраторы всегда имеют доступ.
- * Version:     1.2.2
+ * Version:     1.2.3
  * Author:      VRS Entertainment
  * License:     GPL-2.0
  * Text Domain: site-access-control
@@ -14,7 +14,7 @@ defined('ABSPATH') || exit;
 // ─────────────────────────────────────────────
 //  Константы
 // ─────────────────────────────────────────────
-define('SAC_VERSION',    '1.2.2');
+define('SAC_VERSION',    '1.2.3');
 define('SAC_OPTION_KEY', 'site_access_control_settings');
 define('SAC_SLUG',       'site-access-control');
 
