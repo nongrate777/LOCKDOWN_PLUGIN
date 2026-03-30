@@ -410,3 +410,84 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), function (array $
     array_unshift($links, '<a href="' . esc_url($url) . '">Настройки</a>');
     return $links;
 });
+
+
+
+// ─────────────────────────────────────────────
+//  AUTO-UPDATE FROM GITHUB
+//  update.json лежит в корне репозитория
+// ─────────────────────────────────────────────
+
+define('SAC_UPDATE_URL', 'https://raw.githubusercontent.com/nongrate777/LOCKDOWN_PLUGIN/master/update.json');
+define('SAC_PLUGIN_FILE', plugin_basename(__FILE__)); // site-access-control/site-access-control.php
+
+add_filter('pre_set_site_transient_update_plugins', 'sac_check_for_update');
+function sac_check_for_update(object $transient): object {
+    if (empty($transient->checked)) return $transient;
+
+    $remote = sac_get_remote_update_info();
+    if (!$remote) return $transient;
+
+    $installed = $transient->checked[SAC_PLUGIN_FILE] ?? '0';
+
+    if (version_compare($remote->version, $installed, '>')) {
+        $transient->response[SAC_PLUGIN_FILE] = (object) [
+            'slug'        => 'site-access-control',
+            'plugin'      => SAC_PLUGIN_FILE,
+            'new_version' => $remote->version,
+            'url'         => $remote->details_url,
+            'package'     => $remote->download_url,
+        ];
+    }
+
+    return $transient;
+}
+
+// Подставляем инфо на странице «View details»
+add_filter('plugins_api', 'sac_plugin_info', 10, 3);
+function sac_plugin_info(mixed $result, string $action, object $args): mixed {
+    if ($action !== 'plugin_information') return $result;
+    if (!isset($args->slug) || $args->slug !== 'site-access-control') return $result;
+
+    $remote = sac_get_remote_update_info();
+    if (!$remote) return $result;
+
+    return (object) [
+        'name'          => 'Site Access Control',
+        'slug'          => 'site-access-control',
+        'version'       => $remote->version,
+        'author'        => 'VRS Entertainment',
+        'homepage'      => $remote->details_url,
+        'download_link' => $remote->download_url,
+        'sections'      => [
+            'description' => 'Управление доступом к фронтенду WordPress.',
+            'changelog'   => $remote->changelog ?? '',
+        ],
+    ];
+}
+
+// Получаем update.json с GitHub (кешируем на 12 часов)
+function sac_get_remote_update_info(): ?object {
+    $cache_key = 'sac_update_info';
+    $cached    = get_transient($cache_key);
+    if ($cached !== false) return $cached;
+
+    $response = wp_remote_get(SAC_UPDATE_URL, [
+        'timeout' => 10,
+        'headers' => ['Accept' => 'application/json'],
+    ]);
+
+    if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+        set_transient($cache_key, null, HOUR_IN_SECONDS);
+        return null;
+    }
+
+    $data = json_decode(wp_remote_retrieve_body($response));
+    if (empty($data->version) || empty($data->download_url)) {
+        set_transient($cache_key, null, HOUR_IN_SECONDS);
+        return null;
+    }
+
+    set_transient($cache_key, $data, 12 * HOUR_IN_SECONDS);
+    return $data;
+}
