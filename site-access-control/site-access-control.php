@@ -3,7 +3,7 @@
  * Plugin Name: Site Access Control
  * Plugin URI:  https://noname.com
  * Description: Управление доступом к фронтенду: открыт / закрыт для людей / закрыт для всех. Администраторы всегда имеют доступ.
- * Version:     1.2.3
+ * Version:     1.2.4
  * Author:      VRS Entertainment
  * License:     GPL-2.0
  * Text Domain: site-access-control
@@ -14,7 +14,7 @@ defined('ABSPATH') || exit;
 // ─────────────────────────────────────────────
 //  Константы
 // ─────────────────────────────────────────────
-define('SAC_VERSION',    '1.2.3');
+define('SAC_VERSION',    '1.2.4');
 define('SAC_OPTION_KEY', 'site_access_control_settings');
 define('SAC_SLUG',       'site-access-control');
 
@@ -415,7 +415,6 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), function (array $
 
 // ─────────────────────────────────────────────
 //  AUTO-UPDATE FROM GITHUB
-//  update.json лежит в корне репозитория
 // ─────────────────────────────────────────────
 
 define('SAC_UPDATE_URL', 'https://raw.githubusercontent.com/nongrate777/LOCKDOWN_PLUGIN/master/update.json');
@@ -443,7 +442,7 @@ function sac_check_for_update(object $transient): object {
     return $transient;
 }
 
-// Подставляем инфо на странице «View details»
+
 add_filter('plugins_api', 'sac_plugin_info', 10, 3);
 function sac_plugin_info(mixed $result, string $action, object $args): mixed {
     if ($action !== 'plugin_information') return $result;
